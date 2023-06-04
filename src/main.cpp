@@ -1,18 +1,20 @@
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
+// #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
+#include <freertos/FreeRTOS.h>
+#include "freertos/task.h"
 #include "motor.h"
+#include "ota_task.h"
 
+#define MOTOR1_FWD 4
+#define MOTOR1_BCK 12
+#define MOTOR1_ENB 14
 
-#define MOTOR1_FWD D1
-#define MOTOR1_BCK D2
-#define MOTOR1_ENB D0
-
-#define MOTOR2_FWD D3
-#define MOTOR2_BCK D4
-#define MOTOR2_ENB D5
+#define MOTOR2_FWD 15
+#define MOTOR2_BCK 13
+#define MOTOR2_ENB 12
 
 typedef unsigned char uchar;
 
@@ -30,6 +32,7 @@ WiFiUDP Udp;
 constexpr int localUdpPort = 1185;
 uchar incomingPacket[256]; // For incoming network data
 char replyPacket[256] = "I will not hesitate.\n";
+uint8_t replyPacketB[256] = "I will not hesitate.\n";
 
 Motor Motor1(MOTOR1_FWD, MOTOR1_BCK, MOTOR1_ENB);
 Motor Motor2(MOTOR2_FWD, MOTOR2_BCK, MOTOR2_ENB);
@@ -143,7 +146,7 @@ void otaSetup(){
 }
 
 void setup() {
-	Serial.begin(9600);     // opens serial port, sets data rate to 9600 bps
+	Serial.begin(115200);     // opens serial port, sets data rate to 9600 bps
   Serial.println();
 
   Motor1.setup();
@@ -158,9 +161,18 @@ void setup() {
       Serial.print(WiFi.status());
   }
   Serial.println(" connected");
-  Udp.begin(localUdpPort);
   Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
-  otaSetup();
+
+  otaIntSetup();
+  xTaskCreate(
+    otaRun,
+    "Ota Interface",
+    1000,
+    NULL,
+    1,
+    NULL
+  );
+
 	Serial.println("Begun!");
   Serial.println();
 
@@ -186,7 +198,7 @@ void loop() {
   //     index_Message = 0;
   //   }
   // }
-  ArduinoOTA.handle();
+  
   int packet_Size = Udp.parsePacket();
   if(packet_Size){
     Serial.printf("Received %d bytes from %s, port %d\n", packet_Size, Udp.remoteIP().toString().c_str(), Udp.remotePort());
@@ -200,7 +212,7 @@ void loop() {
     int c = read_Message(incomingPacket);
     replies[c].toCharArray(replyPacket, 256);
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-    Udp.write(replyPacket);
+    Udp.write(replyPacketB, 23);
     Udp.endPacket();
     Serial.println(replyPacket);
   }
