@@ -1,42 +1,87 @@
 #include <Arduino.h>
 // #include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
+// #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+#include <WiFi.h>
 
 #include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
 
-#include <cppQueue.h>
+
 
 #define BUFF 256
+#define Q_SIZE 16
 #define debugPort 1186
-
-Queue
-
-class WSerial{
+#define echoSerial false
 
 
-    uint8_t queue[BUFF];
+class WSerialClass{
+
+
     int it_front=0;
     int it_back=0;
-    WiFiUDP Udp; 
-
-    WSerial(){
-        Udp.begin(debugPort);
+    WiFiServer serverD;
+    // WiFiUDP Udp; 
+    
+    QueueHandle_t xQueue;
+    char item[BUFF];
+    public:
+    WSerialClass(){
+        xQueue = xQueueCreate(Q_SIZE, sizeof(item));
     }
 
-    void serialServer(void * parameters){
+    void begin(){
+        //Wifi Should be initialized by main function
+        serverD.begin(debugPort);
+        // Udp.begin(debugPort);
+        println("Wireless Serial initialized");
+    }
+    void serialServer(){
         for(;;){
-            if(it_front != it_back){
-                Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-            }
-            for(;it_front != it_back; it_front=(it_front+1)%BUFF;){
-                Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-                Udp.write(queue[it_front]);
-                Udp.endPacket();
+            WiFiClient client = serverD.available();
+            for(;;){
+                if(!client || !client.connected()){
+                    vTaskDelay(50 / portTICK_PERIOD_MS);
+                    break;
+                }
+                else if(xQueueReceive(xQueue, item, 100000 / portTICK_PERIOD_MS)){
+                    if(echoSerial){
+                        Serial.print(item);
+                    }
+                    client.write(item);
 
+                }
             }
         }
     }
+    // public:
 
-}
+    void print(String msg){
+        char send[BUFF];
+        strcpy(send, msg.c_str());
+        xQueueSend(xQueue, send, 1000 / portTICK_PERIOD_MS);
+    }
+    void println(){
+        print("\n");
+    }
+    void println(int val){
+        print(String(val)+'\n');
+    }
+    void println(String msg){
+        print(msg+'\n');
+    }
+    void printf(String msg, ...){
+        va_list arg;
+        va_start(arg, msg);
+        char read[BUFF];
+        char send[BUFF];
+        strcpy(read, msg.c_str());
+        vsnprintf(send, BUFF, read, arg);
+        xQueueSend(xQueue, send, 1000 / portTICK_PERIOD_MS);
+    }
+
+};
+
+
     // Serial.println(replyPacket);
+    

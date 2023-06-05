@@ -1,10 +1,16 @@
 #include <Arduino.h>
 // #include <ESP8266WiFi.h>
+#include <WiFi.h>
 #include <WiFiUdp.h>
+
 #include <ArduinoOTA.h>
 
 #include <freertos/FreeRTOS.h>
 #include "freertos/task.h"
+#include "freertos/queue.h"
+#include "wirelessSerial.h"
+// #include "wirelessWSerial.cpp"
+
 #include "motor.h"
 #include "ota_task.h"
 
@@ -22,9 +28,11 @@ typedef unsigned char uchar;
 // const char* ssid = "HR";
 // const char* password = "assembler";
 
+WSerialClass WSerial;
+
 const char* ssid = "HOME1";
 const char* password = "J2U8GLe7W8";
-byte incoming_Byte = 0;   // for incoming serial data
+byte incoming_Byte = 0;   // for incoming WSerial data
 uchar incoming_Message[256] = "";
 byte index_Message = 0;
 
@@ -47,45 +55,45 @@ int read_Message(uchar *message){
       case 'w':
         Motor1.changeMotorDirection(1);
         Motor2.changeMotorDirection(1);
-        Serial.println("Onward!");
+        WSerial.println("Onward!");
         return 0;
         break;
       case 's':
         Motor1.changeMotorDirection(-1);
         Motor2.changeMotorDirection(-1);
-        Serial.println("Backward!");
+        WSerial.println("Backward!");
         return 0;
         break;
       case 'a':
         Motor1.changeMotorDirection(-1);
         Motor2.changeMotorDirection(1);
-        Serial.println("Left");
+        WSerial.println("Left");
         return 0;
         break;
       case 'd':
         Motor1.changeMotorDirection(1);
         Motor2.changeMotorDirection(-1);
-        Serial.println("Right");
+        WSerial.println("Right");
         return 0;
         break;
       case 'e':
         Motor1.changeMotorDirection(0);
         Motor2.changeMotorDirection(0);
-        Serial.println("Noneward!");
+        WSerial.println("Noneward!");
         return 0;
         break;
       case '+':
         Motor1.changeMotorSpeed(min( Motor1.rt_Speed + 10, 255 ));
         Motor2.changeMotorSpeed(min( Motor2.rt_Speed + 10, 255 ));
-        Serial.print("Current speed : ");
-        Serial.println(Motor1.rt_Speed);
+        WSerial.print("Current speed : ");
+        WSerial.println(Motor1.rt_Speed);
         return 0;
         break;
       case '-':
         Motor1.changeMotorSpeed( max ( Motor1.rt_Speed - 10, 90 ));
         Motor2.changeMotorSpeed( max ( Motor2.rt_Speed - 10, 90 ));
-        Serial.print("Current speed : ");
-        Serial.println(Motor1.rt_Speed);
+        WSerial.print("Current speed : ");
+        WSerial.println(Motor1.rt_Speed);
         return 0;
         break;
       case 'h':
@@ -94,12 +102,12 @@ int read_Message(uchar *message){
           if(speed < 90) return 3;
           Motor1.changeMotorSpeed( speed );
           Motor2.changeMotorSpeed( speed );
-          Serial.print("Current speed : ");
-          Serial.println(Motor1.rt_Speed);
+          WSerial.print("Current speed : ");
+          WSerial.println(Motor1.rt_Speed);
           return 0;
           break;
         }
-        //Serial.write("Wrong operation! Use w/s/+/-\n");
+        //WSerial.write("Wrong operation! Use w/s/+/-\n");
       default:
         return 1;
     }
@@ -107,61 +115,34 @@ int read_Message(uchar *message){
   return 2;
 }
 
-void otaSetup(){
-  ArduinoOTA.setHostname("lilwsadbot");
-  ArduinoOTA.setPassword("palindrom");
-
-    ArduinoOTA.onStart([]() {
-    String type;
-    if (ArduinoOTA.getCommand() == U_FLASH) {
-        type = "sketch";
-    } else { // U_FS
-        type = "filesystem";
-    }
-
-    // NOTE: if updating FS this would be the place to unmount FS using FS.end()
-    Serial.println("Start updating " + type);
-    });
-    ArduinoOTA.onEnd([]() {
-        Serial.println("\nEnd");
-    });
-    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    });
-    ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) {
-        Serial.println("Auth Failed");
-    } else if (error == OTA_BEGIN_ERROR) {
-        Serial.println("Begin Failed");
-    } else if (error == OTA_CONNECT_ERROR) {
-        Serial.println("Connect Failed");
-    } else if (error == OTA_RECEIVE_ERROR) {
-        Serial.println("Receive Failed");
-    } else if (error == OTA_END_ERROR) {
-        Serial.println("End Failed");
-    }
-    });
-    ArduinoOTA.begin();
+void WSerialServerCli(void * parameters){
+  WSerial.serialServer();
 }
 
 void setup() {
-	Serial.begin(115200);     // opens serial port, sets data rate to 9600 bps
-  Serial.println();
+  pinMode(33, OUTPUT);
+  digitalWrite(33, LOW);
+  delay(10);
+  digitalWrite(33, HIGH);
+
+	Serial.begin(115200);     // opens WSerial port, sets data rate to 9600 bps
+  WSerial.println();
 
   Motor1.setup();
   Motor2.setup();
 
-  Serial.printf("Connecting to %s ", ssid);
+  //Serial.printf("Connecting to %s ", ssid);
+  WSerial.printf("Connecting to %s ", ssid);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
   {
       delay(500);
-      //Serial.print(".");
-      Serial.print(WiFi.status());
+      //WSerial.print(".");
+      WSerial.println(int(WiFi.status()));
   }
-  Serial.println(" connected");
-  Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
+  WSerial.println("Connected!");
+  Udp.begin(localUdpPort);
+  WSerial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
 
   otaIntSetup();
   xTaskCreate(
@@ -173,9 +154,18 @@ void setup() {
     NULL
   );
 
-	Serial.println("Begun!");
-  Serial.println();
+  WSerial.begin();
 
+  xTaskCreate(
+    WSerialServerCli,
+    "WWSerial Server",
+    2048,
+    NULL,
+    1,
+    NULL
+  );
+  digitalWrite(33, LOW);
+	WSerial.println("Setup Complete!");
 }
 
 void loop() {
@@ -183,40 +173,39 @@ void loop() {
 	//digitalWrite(MOTOR1_SPD, HIGH);
 	// send data only when you receive data:
 
-	// if (Serial.available() > 0) {
+	// if (WSerial.available() > 0) {
 	// 	// read the incoming byte:
-	// 	incoming_Byte = Serial.read();
+	// 	incoming_Byte = WSerial.read();
   //   if(incoming_Byte != '\n' ){
   //     incoming_Message[index_Message++] = incoming_Byte;
   //   }
   //   else{
   //     for(int i = 0; i < index_Message; i++)
-  //       Serial.print((unsigned char)(incoming_Message[i]));
-  //     Serial.println();
+  //       WSerial.print((unsigned char)(incoming_Message[i]));
+  //     WSerial.println();
   //     int c = read_Message();
-  //     Serial.println(replies[c]);
+  //     WSerial.println(replies[c]);
   //     index_Message = 0;
   //   }
   // }
-  
   int packet_Size = Udp.parsePacket();
   if(packet_Size){
-    Serial.printf("Received %d bytes from %s, port %d\n", packet_Size, Udp.remoteIP().toString().c_str(), Udp.remotePort());
+    WSerial.printf("Received %d bytes from %s, port %d\n", packet_Size, Udp.remoteIP().toString().c_str(), Udp.remotePort());
     int len = Udp.read(incomingPacket, 255);
     if (len > 0)
     {
         incomingPacket[len] = '\0';
     }
-    Serial.printf("UDP packet contents: %s\n", incomingPacket);
+    WSerial.printf("UDP packet contents: %s\n", incomingPacket);
 
     int c = read_Message(incomingPacket);
     replies[c].toCharArray(replyPacket, 256);
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
     Udp.write(replyPacketB, 23);
     Udp.endPacket();
-    Serial.println(replyPacket);
+    WSerial.println(replyPacket);
   }
-  delay(10);
+  delay(100);
 }
 
 
