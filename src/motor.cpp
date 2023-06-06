@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <motor.h>
+#include "wirelessSerial.h"
 
 Motor::Motor(int pin_fwd, int pin_bck, int pin_enb)
 {
@@ -25,17 +26,17 @@ void Motor::changeMotorDirection(short new_directon)
 			case -1:
 				digitalWrite(PIN_BCK, HIGH);
 				digitalWrite(PIN_FWD, LOW);
-				Serial.printf("Setting %d HIGH and %d LOW\n", PIN_BCK, PIN_FWD);
+				WSerial.printf("Setting %d HIGH and %d LOW\n", PIN_BCK, PIN_FWD);
 				break;
 			case 0:
 				digitalWrite(PIN_BCK, LOW);
 				digitalWrite(PIN_FWD, LOW);
-				Serial.printf("Setting %d LOW and %d LOW\n", PIN_BCK, PIN_FWD);
+				WSerial.printf("Setting %d LOW and %d LOW\n", PIN_BCK, PIN_FWD);
 				break;
 			case 1:
 				digitalWrite(PIN_BCK, LOW);
 				digitalWrite(PIN_FWD, HIGH);
-				Serial.printf("Setting %d LOW and %d HIGH\n", PIN_BCK, PIN_FWD);
+				WSerial.printf("Setting %d LOW and %d HIGH\n", PIN_BCK, PIN_FWD);
 				break;
 		}
 		analogWrite(PIN_ENB, 255);

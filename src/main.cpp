@@ -29,6 +29,7 @@ typedef unsigned char uchar;
 // const char* password = "assembler";
 
 WSerialClass WSerial;
+TaskHandle_t WSerial_handle;
 
 const char* ssid = "HOME1";
 const char* password = "J2U8GLe7W8";
@@ -115,6 +116,20 @@ int read_Message(uchar *message){
   return 2;
 }
 
+const char* wl_status_to_string(wl_status_t status) {
+  switch (status) {
+    case WL_NO_SHIELD: return "WL_NO_SHIELD";
+    case WL_IDLE_STATUS: return "WL_IDLE_STATUS";
+    case WL_NO_SSID_AVAIL: return "WL_NO_SSID_AVAIL";
+    case WL_SCAN_COMPLETED: return "WL_SCAN_COMPLETED";
+    case WL_CONNECTED: return "WL_CONNECTED";
+    case WL_CONNECT_FAILED: return "WL_CONNECT_FAILED";
+    case WL_CONNECTION_LOST: return "WL_CONNECTION_LOST";
+    case WL_DISCONNECTED: return "WL_DISCONNECTED";
+  }
+  return "UNKNOWN_ERROR";
+}
+
 void WSerialServerCli(void * parameters){
   WSerial.serialServer();
 }
@@ -132,27 +147,19 @@ void setup() {
   Motor2.setup();
 
   //Serial.printf("Connecting to %s ", ssid);
-  WSerial.printf("Connecting to %s ", ssid);
+  WSerial.printf("Connecting to %s \n", ssid);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
   {
       delay(500);
       //WSerial.print(".");
-      WSerial.println(int(WiFi.status()));
+      WSerial.println(wl_status_to_string(WiFi.status()));
   }
   WSerial.println("Connected!");
   Udp.begin(localUdpPort);
   WSerial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
 
-  otaIntSetup();
-  xTaskCreate(
-    otaRun,
-    "Ota Interface",
-    1000,
-    NULL,
-    1,
-    NULL
-  );
+  otaSetup();
 
   WSerial.begin();
 
@@ -162,7 +169,7 @@ void setup() {
     2048,
     NULL,
     1,
-    NULL
+    &WSerial_handle
   );
   digitalWrite(33, LOW);
 	WSerial.println("Setup Complete!");
@@ -205,6 +212,8 @@ void loop() {
     Udp.endPacket();
     WSerial.println(replyPacket);
   }
+  ArduinoOTA.handle();
+
   delay(100);
 }
 
