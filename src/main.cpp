@@ -8,19 +8,21 @@
 #include <freertos/FreeRTOS.h>
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "wirelessSerial.h"
 // #include "wirelessWSerial.cpp"
 
+#include "wirelessSerial.h"
 #include "motor.h"
 #include "ota_task.h"
+#include "microSDCam.h"
 
-#define MOTOR1_FWD 4
-#define MOTOR1_BCK 12
-#define MOTOR1_ENB 14
 
-#define MOTOR2_FWD 15
-#define MOTOR2_BCK 13
-#define MOTOR2_ENB 12
+#define MOTOR1_FWD 0
+#define MOTOR1_BCK 0
+#define MOTOR1_ENB 0
+
+#define MOTOR2_FWD 0
+#define MOTOR2_BCK 0
+#define MOTOR2_ENB 0 
 
 typedef unsigned char uchar;
 
@@ -113,6 +115,10 @@ int read_Message(uchar *message){
         return 1;
     }
   }
+  else if(message[0] == '3'){
+    vTaskResume(SDCam_handle);
+    return 0;
+  }
   return 2;
 }
 
@@ -132,6 +138,19 @@ const char* wl_status_to_string(wl_status_t status) {
 
 void WSerialServerCli(void * parameters){
   WSerial.serialServer();
+}
+void SDCamera(void * parameters){
+  CameraSetup();
+  while(1){
+    if(uploading){
+      vTaskDelete(NULL);
+    }
+
+    CameraPicture();
+
+    vTaskSuspend(NULL);
+
+  }
 }
 
 void setup() {
@@ -171,8 +190,21 @@ void setup() {
     1,
     &WSerial_handle
   );
+
+  xTaskCreate(
+    SDCamera,
+    "SDCamera",
+    20480,
+    NULL,
+    1,
+    &SDCam_handle
+  );
   digitalWrite(33, LOW);
-	WSerial.println("Setup Complete!");
+	WSerial.println("Setup without camera Complete!");
+
+
+  // delay(20000);
+  //Take a Photo
 }
 
 void loop() {

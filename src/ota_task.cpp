@@ -3,12 +3,13 @@
 #include <freertos/FreeRTOS.h>
 #include <wirelessSerial.h>
 
-
+bool uploading=false;
 void otaSetup(){
   ArduinoOTA.setHostname("lilwsadbot");
   ArduinoOTA.setPassword("palindrom");
 
     ArduinoOTA.onStart([]() {
+        uploading=true;
         String type;
         if (ArduinoOTA.getCommand() == U_FLASH) {
             type = "sketch";
