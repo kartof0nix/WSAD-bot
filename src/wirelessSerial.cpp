@@ -10,7 +10,7 @@
 
 
 #define BUFF 256
-#define Q_SIZE 16
+#define Q_SIZE 26
 #define debugPort 1186
 #define echoSerial false
 

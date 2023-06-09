@@ -14,5 +14,5 @@ ESP32(cam) - however, the project is written in Arduino so it can be easily modi
 1. OTA - Updete the board without connecting it to the computer
 2. Wireless serial - See logs from your device without connecting it to the computer
 3. Motor control via wifi
-4. Live camera feed (todo)
-5. Camera save to SD card (todo)
+4. Live camera feed 
+5. Camera save to SD card 

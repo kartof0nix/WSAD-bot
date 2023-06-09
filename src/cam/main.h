@@ -1,0 +1,4 @@
+
+void startCameraServer();
+
+void WebServerSetup();

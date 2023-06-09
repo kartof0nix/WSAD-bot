@@ -15,6 +15,7 @@
 #include "ota_task.h"
 #include "microSDCam.h"
 
+#include "cam/main.h"
 
 #define MOTOR1_FWD 0
 #define MOTOR1_BCK 0
@@ -140,16 +141,12 @@ void WSerialServerCli(void * parameters){
   WSerial.serialServer();
 }
 void SDCamera(void * parameters){
-  CameraSetup();
   while(1){
+    vTaskSuspend(NULL);
     if(uploading){
       vTaskDelete(NULL);
     }
-
     CameraPicture();
-
-    vTaskSuspend(NULL);
-
   }
 }
 
@@ -165,6 +162,8 @@ void setup() {
   Motor1.setup();
   Motor2.setup();
 
+  CameraSetup();
+
   //Serial.printf("Connecting to %s ", ssid);
   WSerial.printf("Connecting to %s \n", ssid);
   WiFi.begin(ssid, password);
@@ -177,6 +176,7 @@ void setup() {
   WSerial.println("Connected!");
   Udp.begin(localUdpPort);
   WSerial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
+  Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
 
   otaSetup();
 
@@ -200,8 +200,10 @@ void setup() {
     &SDCam_handle
   );
   digitalWrite(33, LOW);
-	WSerial.println("Setup without camera Complete!");
 
+  WebServerSetup();
+
+	WSerial.println("Setup with camera Complete!");
 
   // delay(20000);
   //Take a Photo
