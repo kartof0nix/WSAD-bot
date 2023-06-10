@@ -26,6 +26,11 @@ All of the above should be preinstalled with Arduino.
 4. Live camera feed 
 5. Camera save to SD card 
 
+# Change of Plans
+
+This project will now be based and inmplement all of the fetures of this one:
+https://dronebotworkshop.com/esp32cam-robot-car/
+
 # Future plans
 
 Hence the code is now complete (all features are present), I will temporary step back from writing this repo and instead catch up frontend repo to suit all present features and create a PCB. Minor fixes might get pushed for now. Once I'm 
