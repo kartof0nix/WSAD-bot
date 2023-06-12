@@ -11,19 +11,13 @@
 // #include "wirelessWSerial.cpp"
 
 #include "wirelessSerial.h"
-#include "motor.h"
 #include "ota_task.h"
 #include "microSDCam.h"
 
 #include "cam/main.h"
+#include "wheels/wheels.h"
 
-#define MOTOR1_FWD 0
-#define MOTOR1_BCK 0
-#define MOTOR1_ENB 0
 
-#define MOTOR2_FWD 0
-#define MOTOR2_BCK 0
-#define MOTOR2_ENB 0 
 
 typedef unsigned char uchar;
 
@@ -46,75 +40,14 @@ uchar incomingPacket[256]; // For incoming network data
 char replyPacket[256] = "I will not hesitate.\n";
 uint8_t replyPacketB[256] = "I will not hesitate.\n";
 
-Motor Motor1(MOTOR1_FWD, MOTOR1_BCK, MOTOR1_ENB);
-Motor Motor2(MOTOR2_FWD, MOTOR2_BCK, MOTOR2_ENB);
+
 // Message modes : 0 read variable; 1/2 r/w configuration; 3 - direct motor control; 4 - manouvers (eg. go forward);
 
 String replies[4] = {"OK", "Wrong ussage.", "Wrong message type.", "Argument error."};
 
-int read_Message(uchar *message){
+int read_Message(uint len, uchar *message){
   if(message[0] == '4'){
-    switch (message[1])
-    {
-      case 'w':
-        Motor1.changeMotorDirection(1);
-        Motor2.changeMotorDirection(1);
-        WSerial.println("Onward!");
-        return 0;
-        break;
-      case 's':
-        Motor1.changeMotorDirection(-1);
-        Motor2.changeMotorDirection(-1);
-        WSerial.println("Backward!");
-        return 0;
-        break;
-      case 'a':
-        Motor1.changeMotorDirection(-1);
-        Motor2.changeMotorDirection(1);
-        WSerial.println("Left");
-        return 0;
-        break;
-      case 'd':
-        Motor1.changeMotorDirection(1);
-        Motor2.changeMotorDirection(-1);
-        WSerial.println("Right");
-        return 0;
-        break;
-      case 'e':
-        Motor1.changeMotorDirection(0);
-        Motor2.changeMotorDirection(0);
-        WSerial.println("Noneward!");
-        return 0;
-        break;
-      case '+':
-        Motor1.changeMotorSpeed(min( Motor1.rt_Speed + 10, 255 ));
-        Motor2.changeMotorSpeed(min( Motor2.rt_Speed + 10, 255 ));
-        WSerial.print("Current speed : ");
-        WSerial.println(Motor1.rt_Speed);
-        return 0;
-        break;
-      case '-':
-        Motor1.changeMotorSpeed( max ( Motor1.rt_Speed - 10, 90 ));
-        Motor2.changeMotorSpeed( max ( Motor2.rt_Speed - 10, 90 ));
-        WSerial.print("Current speed : ");
-        WSerial.println(Motor1.rt_Speed);
-        return 0;
-        break;
-      case 'h':
-        {
-          int speed = message[2];
-          if(speed < 90) return 3;
-          Motor1.changeMotorSpeed( speed );
-          Motor2.changeMotorSpeed( speed );
-          WSerial.print("Current speed : ");
-          WSerial.println(Motor1.rt_Speed);
-          return 0;
-          break;
-        }
-        //WSerial.write("Wrong operation! Use w/s/+/-\n");
-      default:
-        return 1;
-    }
+    wheelsReadMessage(len-1, message+1);    
   }
   else if(message[0] == '3'){
     vTaskResume(SDCam_handle);
@@ -159,8 +92,7 @@ void setup() {
 	Serial.begin(115200);     // opens WSerial port, sets data rate to 9600 bps
   WSerial.println();
 
-  Motor1.setup();
-  Motor2.setup();
+  wheelsSetup();
 
   CameraSetup();
 
@@ -239,7 +171,7 @@ void loop() {
     }
     WSerial.printf("UDP packet contents: %s\n", incomingPacket);
 
-    int c = read_Message(incomingPacket);
+    int c = read_Message(len, incomingPacket);
     replies[c].toCharArray(replyPacket, 256);
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
     Udp.write(replyPacketB, 23);
