@@ -5,8 +5,8 @@
 #include <wirelessSerial.h>
 
 
-Motor Motor1(MOTOR1_FWD, MOTOR1_BCK, MOTOR1_ENB);
-Motor Motor2(MOTOR2_FWD, MOTOR2_BCK, MOTOR2_ENB);
+Motor Motor1(MOTOR1_DRT, MOTOR1_ENB);
+Motor Motor2(MOTOR2_DRT, MOTOR2_ENB);
 
 void wheelsSetup(){
     Motor1.setup();

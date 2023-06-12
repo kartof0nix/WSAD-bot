@@ -89,7 +89,7 @@ void setup() {
   delay(10);
   digitalWrite(33, HIGH);
 
-	Serial.begin(115200);     // opens WSerial port, sets data rate to 9600 bps
+	// Serial.begin(115200);     // opens WSerial port, sets data rate to 9600 bps
   WSerial.println();
 
   wheelsSetup();
@@ -108,7 +108,7 @@ void setup() {
   WSerial.println("Connected!");
   Udp.begin(localUdpPort);
   WSerial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
-  Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
+  // Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
 
   otaSetup();
 

@@ -1,7 +1,5 @@
-#define MOTOR1_FWD 0
-#define MOTOR1_BCK 0
-#define MOTOR1_ENB 0
+#define MOTOR1_DRT 1
+#define MOTOR1_ENB 16
 
-#define MOTOR2_FWD 0
-#define MOTOR2_BCK 0
-#define MOTOR2_ENB 0 
+#define MOTOR2_DRT 3
+#define MOTOR2_ENB 0
