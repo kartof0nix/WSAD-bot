@@ -59,7 +59,7 @@ class WSerialClass{
     void print(String msg){
         char send[BUFF];
         strcpy(send, msg.c_str());
-        xQueueSend(xQueue, send, 0 / portTICK_PERIOD_MS);
+        xQueueSend(xQueue, send, 5 / portTICK_PERIOD_MS);
     }
     void println(){
         print("\n");
@@ -77,7 +77,7 @@ class WSerialClass{
         char send[BUFF];
         strcpy(read, msg.c_str());
         vsnprintf(send, BUFF, read, arg);
-        xQueueSend(xQueue, send, 1000 / portTICK_PERIOD_MS);
+        xQueueSend(xQueue, send, 5 / portTICK_PERIOD_MS);
     }
 
 };
