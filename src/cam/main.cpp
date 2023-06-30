@@ -1,5 +1,5 @@
 #include "esp_camera.h"
-#include "wirelessSerial.h"
+#include "logger/logger.h"
 #include <WiFi.h>
 
 //
@@ -24,11 +24,11 @@
 void startCameraServer();
 
 void WebServerSetup() {
-  WSerial.println();
+  logger.println();
   startCameraServer();
-  WSerial.print("Camera Ready! Use 'http://");
-  WSerial.print(WiFi.localIP().toString());
-  WSerial.println("' to connect");
+  logger.print("Camera Ready! Use 'http://");
+  logger.print(WiFi.localIP().toString());
+  logger.println("' to connect");
   // setupLedFlash(4);
 }
 

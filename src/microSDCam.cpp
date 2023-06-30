@@ -12,7 +12,7 @@
 #include "EEPROM.h"
  
 //Wireless Serial
-#include <wirelessSerial.h>
+#include "logger/logger.h"
 
 TaskHandle_t SDCam_handle;
 
@@ -80,21 +80,21 @@ void configESPCamera() {
     config.fb_count = 1;
   }
   // Initialize the Camera
-  WSerial.println("Camera init 1 succesfull");
+  logger.println("Camera init 1 succesfull");
   delay(100);
   esp_err_t err = esp_camera_init(&config);
-  WSerial.println("Camera init 2 succesfull");
+  logger.println("Camera init 2 succesfull");
   delay(100);
   if (err != ESP_OK) {
-    WSerial.printf("Camera init failed with error 0x%x", err);
+    logger.printf("Camera init failed with error 0x%x", err);
     return;
   }
-  WSerial.println("Camera init 3 succesfull");
+  logger.println("Camera init 3 succesfull");
   delay(100);
   // Camera quality adjustments
   sensor_t * s = esp_camera_sensor_get();
  
-  WSerial.println("Camera init 4 succesfull");
+  logger.println("Camera init 4 succesfull");
   delay(100);
   // BRIGHTNESS (-2 to 2)
   s->set_brightness(s, 0);
@@ -146,14 +146,14 @@ void configESPCamera() {
 void initMicroSDCard() {
   // Start the MicroSD card
  
-  WSerial.println("Mounting MicroSD Card");
+  logger.println("Mounting MicroSD Card");
   if (!SD_MMC.begin()) {
-    WSerial.println("MicroSD Card Mount Failed");
+    logger.println("MicroSD Card Mount Failed");
     return;
   }
   uint8_t cardType = SD_MMC.cardType();
   if (cardType == CARD_NONE) {
-    WSerial.println("No MicroSD Card found");
+    logger.println("No MicroSD Card found");
     return;
   }
  
@@ -166,7 +166,7 @@ void takeNewPhoto(String path) {
   camera_fb_t  * fb = esp_camera_fb_get();
  
   if (!fb) {
-    WSerial.println("Camera capture failed");
+    logger.println("Camera capture failed");
     return;
   }
  
@@ -174,11 +174,11 @@ void takeNewPhoto(String path) {
   fs::FS &fs = SD_MMC;
   File file = fs.open(path.c_str(), FILE_WRITE);
   if (!file) {
-    WSerial.println("Failed to open file in write mode");
+    logger.println("Failed to open file in write mode");
   }
   else {
     file.write(fb->buf, fb->len); // payload (image), payload length
-    WSerial.printf("Saved file to path: %s\n", path.c_str());
+    logger.printf("Saved file to path: %s\n", path.c_str());
   }
   // Close the file
   file.close();
@@ -190,12 +190,12 @@ void takeNewPhoto(String path) {
 void CameraSetup() {
  
   // Initialize the camera
-  WSerial.println("Initializing the camera module...");
+  logger.println("Initializing the camera module...");
   configESPCamera();
-  WSerial.println("Camera OK!");
+  logger.println("Camera OK!");
  
   // Initialize the MicroSD
-  WSerial.print("Initializing the MicroSD card module... ");
+  logger.print("Initializing the MicroSD card module... ");
   initMicroSDCard();
   EEPROM.begin(EEPROM_SIZE);
 }
@@ -206,7 +206,7 @@ void CameraPicture(){
  
   // Path where new picture will be saved in SD Card
   String path = "/image" + String(pictureCount) + ".jpg";
-  WSerial.printf("Picture file name: %s\n", path.c_str());
+  logger.printf("Picture file name: %s\n", path.c_str());
  
   // Take and Save Photo
   takeNewPhoto(path);
@@ -216,6 +216,6 @@ void CameraPicture(){
   EEPROM.commit();
  
   // Bind Wakeup to GPIO13 going LOW
-  WSerial.println("I dont't care I'm done");
+  logger.println("I dont't care I'm done");
 }
  

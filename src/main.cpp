@@ -10,14 +10,14 @@
 #include "freertos/queue.h"
 // #include "wirelessWSerial.cpp"
 
-#include "wirelessSerial.h"
+#include "logger/logger.h"
 #include "ota_task.h"
 #include "microSDCam.h"
 
 #include "cam/main.h"
 #include "wheels/wheels.h"
 
-
+// loggerClass logger;
 
 typedef unsigned char uchar;
 
@@ -25,8 +25,7 @@ typedef unsigned char uchar;
 // const char* ssid = "HR";
 // const char* password = "assembler";
 
-WSerialClass WSerial;
-TaskHandle_t WSerial_handle;
+
 
 const char* ssid = "HOME1";
 const char* password = "J2U8GLe7W8";
@@ -70,9 +69,8 @@ const char* wl_status_to_string(wl_status_t status) {
   return "UNKNOWN_ERROR";
 }
 
-void WSerialServerCli(void * parameters){
-  WSerial.serialServer();
-}
+
+
 void SDCamera(void * parameters){
   while(1){
     vTaskSuspend(NULL);
@@ -90,38 +88,30 @@ void setup() {
   digitalWrite(33, HIGH);
 
 	// Serial.begin(115200);     // opens WSerial port, sets data rate to 9600 bps
-  WSerial.println();
+  logger.println();
 
   wheelsSetup();
 
   CameraSetup();
 
   //Serial.printf("Connecting to %s ", ssid);
-  WSerial.printf("Connecting to %s \n", ssid);
+  logger.printf("Connecting to %s \n", ssid);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
   {
       delay(500);
-      //WSerial.print(".");
-      WSerial.println(wl_status_to_string(WiFi.status()));
+      //logger.print(".");
+      logger.println(wl_status_to_string(WiFi.status()));
   }
-  WSerial.println("Connected!");
+  logger.println("Connected!");
   Udp.begin(localUdpPort);
-  WSerial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
+  logger.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
   // Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
 
   otaSetup();
 
-  WSerial.begin();
 
-  xTaskCreate(
-    WSerialServerCli,
-    "WWSerial Server",
-    2048,
-    NULL,
-    1,
-    &WSerial_handle
-  );
+  
 
   xTaskCreate(
     SDCamera,
@@ -135,7 +125,7 @@ void setup() {
 
   WebServerSetup();
 
-	WSerial.println("Setup with camera Complete!");
+	logger.println("Setup with camera Complete!");
 
   // delay(20000);
   //Take a Photo
@@ -146,37 +136,37 @@ void loop() {
 	//digitalWrite(MOTOR1_SPD, HIGH);
 	// send data only when you receive data:
 
-	// if (WSerial.available() > 0) {
+	// if (logger.available() > 0) {
 	// 	// read the incoming byte:
-	// 	incoming_Byte = WSerial.read();
+	// 	incoming_Byte = logger.read();
   //   if(incoming_Byte != '\n' ){
   //     incoming_Message[index_Message++] = incoming_Byte;
   //   }
   //   else{
   //     for(int i = 0; i < index_Message; i++)
-  //       WSerial.print((unsigned char)(incoming_Message[i]));
-  //     WSerial.println();
+  //       logger.print((unsigned char)(incoming_Message[i]));
+  //     logger.println();
   //     int c = read_Message();
-  //     WSerial.println(replies[c]);
+  //     logger.println(replies[c]);
   //     index_Message = 0;
   //   }
   // }
   int packet_Size = Udp.parsePacket();
   if(packet_Size){
-    WSerial.printf("Received %d bytes from %s, port %d\n", packet_Size, Udp.remoteIP().toString().c_str(), Udp.remotePort());
+    logger.printf("Received %d bytes from %s, port %d\n", packet_Size, Udp.remoteIP().toString().c_str(), Udp.remotePort());
     int len = Udp.read(incomingPacket, 255);
     if (len > 0)
     {
         incomingPacket[len] = '\0';
     }
-    WSerial.printf("UDP packet contents: %s\n", incomingPacket);
+    logger.printf("UDP packet contents: %s\n", incomingPacket);
 
     int c = read_Message(len, incomingPacket);
     replies[c].toCharArray(replyPacket, 256);
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
     Udp.write(replyPacketB, 23);
     Udp.endPacket();
-    WSerial.println(replyPacket);
+    logger.println(replyPacket);
   }
   ArduinoOTA.handle();
 

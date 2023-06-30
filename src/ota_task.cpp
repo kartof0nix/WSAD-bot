@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoOTA.h>
 #include <freertos/FreeRTOS.h>
-#include <wirelessSerial.h>
+#include "logger/logger.h"
 
 bool uploading=false;
 void otaSetup(){
@@ -13,40 +13,40 @@ void otaSetup(){
         String type;
         if (ArduinoOTA.getCommand() == U_FLASH) {
             type = "sketch";
-            WSerial.println("sketch");
+            logger.println("sketch");
         } else { // U_FS
             type = "filesystem";
-            WSerial.println("filesystem");
+            logger.println("filesystem");
         }
-        //WSerial.println("Suspending all other processes (including Wserial)");
+        //logger.println("Suspending all other processes (including logger)");
         //delay(100); // Make sure he gets the logs.
-        //vTaskSuspend(WSerial_handle);
+        //vTaskSuspend(logger_handle);
 
         // NOTE: if updating FS this would be the place to unmount FS using FS.end()
-        WSerial.println("Start updating " + type);
+        logger.println("Start updating " + type);
     });
     ArduinoOTA.onEnd([]() {
-        WSerial.println("\nEnd");
+        logger.println("\nEnd");
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        WSerial.printf("Progress: %u%%\r", (progress*100 / total));
+        logger.printf("Progress: %u%%\r", (progress*100 / total));
     });
     ArduinoOTA.onError([](ota_error_t error) {
-        WSerial.printf("Error[%u]: ", error);
+        logger.printf("Error[%u]: ", error);
         if (error == OTA_AUTH_ERROR) {
-            WSerial.println("Auth Failed");
+            logger.println("Auth Failed");
         } else if (error == OTA_BEGIN_ERROR) {
-            WSerial.println("Begin Failed");
+            logger.println("Begin Failed");
         } else if (error == OTA_CONNECT_ERROR) {
-            WSerial.println("Connect Failed");
+            logger.println("Connect Failed");
         } else if (error == OTA_RECEIVE_ERROR) {
-            WSerial.println("Receive Failed");
+            logger.println("Receive Failed");
         } else if (error == OTA_END_ERROR) {
-            WSerial.println("End Failed");
+            logger.println("End Failed");
         }
     });
     ArduinoOTA.begin();
 
-    WSerial.println("OTA Server initialized");
+    logger.println("OTA Server initialized");
 
 }

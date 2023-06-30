@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "motor.h"
-#include "wirelessSerial.h"
+#include "logger/logger.h"
 
 Motor::Motor(int pin_drt, int pin_enb)
 {
@@ -22,16 +22,16 @@ void Motor::changeMotorDirection(short new_directon)
 		switch(new_directon){
 			case -1:
 				digitalWrite(PIN_DRT, HIGH);
-				WSerial.printf("Setting %d HIGH\n", PIN_DRT);
+				logger.printf("Setting %d HIGH\n", PIN_DRT);
 				break;
 			case 0:
 				digitalWrite(PIN_DRT, LOW);
 				analogWrite(PIN_ENB, 0);
-				WSerial.printf("Setting %d LOW and %d LOW\n", PIN_DRT, PIN_ENB);
+				logger.printf("Setting %d LOW and %d LOW\n", PIN_DRT, PIN_ENB);
 				break;
 			case 1:
 				digitalWrite(PIN_DRT, LOW);
-				WSerial.printf("Setting %d LOW\n", PIN_DRT);
+				logger.printf("Setting %d LOW\n", PIN_DRT);
 				break;
 		}
 		if(rt_Direction != 0){

@@ -2,7 +2,7 @@
 
 #include "motor.h"
 #include "motor_pins.h"
-#include <wirelessSerial.h>
+#include "logger/logger.h"
 
 
 Motor Motor1(MOTOR1_DRT, MOTOR1_ENB);
@@ -20,45 +20,45 @@ int wheelsReadMessage(int len, uint8_t *message){
       case 'w':
         Motor1.changeMotorDirection(1);
         Motor2.changeMotorDirection(1);
-        WSerial.println("Onward!");
+        logger.println("Onward!");
         return 0;
         break;
       case 's':
         Motor1.changeMotorDirection(-1);
         Motor2.changeMotorDirection(-1);
-        WSerial.println("Backward!");
+        logger.println("Backward!");
         return 0;
         break;
       case 'a':
         Motor1.changeMotorDirection(-1);
         Motor2.changeMotorDirection(1);
-        WSerial.println("Left");
+        logger.println("Left");
         return 0;
         break;
       case 'd':
         Motor1.changeMotorDirection(1);
         Motor2.changeMotorDirection(-1);
-        WSerial.println("Right");
+        logger.println("Right");
         return 0;
         break;
       case 'e':
         Motor1.changeMotorDirection(0);
         Motor2.changeMotorDirection(0);
-        WSerial.println("Noneward!");
+        logger.println("Noneward!");
         return 0;
         break;
       case '+':
         Motor1.changeMotorSpeed(min( Motor1.rt_Speed + 10, 255 ));
         Motor2.changeMotorSpeed(min( Motor2.rt_Speed + 10, 255 ));
-        WSerial.print("Current speed : ");
-        WSerial.println(Motor1.rt_Speed);
+        logger.print("Current speed : ");
+        logger.println(Motor1.rt_Speed);
         return 0;
         break;
       case '-':
         Motor1.changeMotorSpeed( max ( Motor1.rt_Speed - 10, 90 ));
         Motor2.changeMotorSpeed( max ( Motor2.rt_Speed - 10, 90 ));
-        WSerial.print("Current speed : ");
-        WSerial.println(Motor1.rt_Speed);
+        logger.print("Current speed : ");
+        logger.println(Motor1.rt_Speed);
         return 0;
         break;
       case 'h':
@@ -68,12 +68,12 @@ int wheelsReadMessage(int len, uint8_t *message){
           if(speed < 90) return 3;
           Motor1.changeMotorSpeed( speed );
           Motor2.changeMotorSpeed( speed );
-          WSerial.print("Current speed : ");
-          WSerial.println(Motor1.rt_Speed);
+          logger.print("Current speed : ");
+          logger.println(Motor1.rt_Speed);
           return 0;
           break;
         }
-        //WSerial.write("Wrong operation! Use w/s/+/-\n");
+        //logger.write("Wrong operation! Use w/s/+/-\n");
       default:
         return 1;
     }
