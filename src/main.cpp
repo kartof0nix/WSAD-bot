@@ -3,6 +3,9 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
+#include <WiFiManager.h>
+#include <AsyncUDP.h>
+
 #include <ArduinoOTA.h>
 
 #include <freertos/FreeRTOS.h>
@@ -13,6 +16,8 @@
 #include "logger/logger.h"
 #include "ota_task.h"
 #include "microSDCam.h"
+
+#include <AsyncUDP.h>
 
 #include "cam/main.h"
 #include "wheels/wheels.h"
@@ -27,8 +32,9 @@ typedef unsigned char uchar;
 
 
 
-const char* ssid = "HOME1";
-const char* password = "J2U8GLe7W8";
+const char* ssid = "ESP32";
+const char* password = "murzynianka";
+
 byte incoming_Byte = 0;   // for incoming WSerial data
 uchar incoming_Message[256] = "";
 byte index_Message = 0;
@@ -81,38 +87,65 @@ void SDCamera(void * parameters){
   }
 }
 
+AsyncUDP Audp;
+WiFiManager wifiManager;
+void wifiTask(void *parameters){
+  while(1){
+    wifiManager.autoConnect(ssid, password);
+    //Once connected : 
+    //1 : Blink and log
+    logger.println("Connected!");
+    digitalWrite(33, HIGH);
+    delay(60);
+    digitalWrite(33, LOW);
+    //2: Broadcast ip address
+    Audp.broadcastTo("DEV:ESP32.DIY listening", 2555);
+    //Wait until disconnect
+    while(WiFi.status() == WL_CONNECTED){
+      vTaskDelay(1000/ portTICK_PERIOD_MS);
+    }
+    logger.print("Wifi DISCONNECTED with status : ");
+    logger.println(wl_status_to_string(WiFi.status()));
+  }
+}
+
+
 void setup() {
   pinMode(33, OUTPUT);
   digitalWrite(33, LOW);
-  delay(10);
+  delay(300);
   digitalWrite(33, HIGH);
-
 	// Serial.begin(115200);     // opens WSerial port, sets data rate to 9600 bps
-  logger.println();
-
+  logger.println("Initializing SETUP..");
+  delay(100);
   wheelsSetup();
 
   CameraSetup();
 
   //Serial.printf("Connecting to %s ", ssid);
-  logger.printf("Connecting to %s \n", ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-      delay(500);
-      //logger.print(".");
-      logger.println(wl_status_to_string(WiFi.status()));
-  }
-  logger.println("Connected!");
-  Udp.begin(localUdpPort);
+  // logger.printf("Connecting to %s \n", ssid);
+  // WiFi.begin(ssid, password);
+  // while (WiFi.status() != WL_CONNECTED)
+  // {
+  //     delay(500);
+  //     //logger.print(".");
+  //     logger.println(wl_status_to_string(WiFi.status()));
+  // }
   logger.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
   // Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
 
-  otaSetup();
 
 
   
 
+  xTaskCreate(
+    wifiTask,
+    "Wifi Manager",
+    1000,
+    NULL,
+    1,
+    NULL
+  );
   xTaskCreate(
     SDCamera,
     "SDCamera",
@@ -126,7 +159,12 @@ void setup() {
   WebServerSetup();
 
 	logger.println("Setup with camera Complete!");
+  while(WiFi.status() != WL_CONNECTED) delay(100);
 
+  logger.begin();
+  otaSetup();
+  Udp.begin(localUdpPort);
+  logger.println("OTA READY!");
   // delay(20000);
   //Take a Photo
 }
