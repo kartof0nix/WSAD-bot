@@ -46,7 +46,5 @@ void otaSetup(){
         }
     });
     ArduinoOTA.begin();
-
     WSerial.println("OTA Server initialized");
-
 }

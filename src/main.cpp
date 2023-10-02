@@ -15,7 +15,6 @@
 
 #include "wirelessSerial.h"
 #include "ota_task.h"
-#include "microSDCam.h"
 
 #include "cam/main.h"
 
@@ -86,7 +85,7 @@ void setup() {
   WSerial.println();
 
 
-CameraSetup();
+  configESPCamera();
 
   //Serial.printf("Connecting to %s ", ssid);
   WSerial.printf("Connecting to %s \n", ssid);
@@ -104,7 +103,7 @@ CameraSetup();
   //2: Broadcast ip address
   String msg = "DEV:ESP32 at " + WiFi.localIP().toString();
   Audp.broadcastTo(msg.c_str(), 2555);
-while (WiFi.status() != WL_CONNECTED)
+  while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
 //WSerial.print(".");
