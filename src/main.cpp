@@ -91,7 +91,7 @@ void setup() {
   WSerial.printf("Connecting to %s \n", ssid);
 
   //Connect to the WIFI or start AP
-  wifiManager.setConnectRetries(4);
+  wifiManager.setConnectRetries(3);
   wifiManager.setConnectTimeout(10);
   wifiManager.setConfigPortalTimeout(300);
   wifiManager.setHttpPort(85);
