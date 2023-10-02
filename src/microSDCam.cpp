@@ -195,9 +195,9 @@ void CameraSetup() {
   WSerial.println("Camera OK!");
  
   // Initialize the MicroSD
-  WSerial.print("Initializing the MicroSD card module... ");
-  initMicroSDCard();
-  EEPROM.begin(EEPROM_SIZE);
+  // WSerial.print("Initializing the MicroSD card module... ");
+  // initMicroSDCard();
+  // EEPROM.begin(EEPROM_SIZE);
 }
 
 void CameraPicture(){
