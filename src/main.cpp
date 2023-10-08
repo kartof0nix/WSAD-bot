@@ -69,24 +69,21 @@ AsyncUDP Audp;
 // }
 
 void blink(){
-  bool now = gpio_get_level(GPIO_NUM_33);
-  digitalWrite(33, !now);
-  delay(100);
-  digitalWrite(33, now);
+  
+  digitalWrite(33, LOW);
+  vTaskDelay(100/portTICK_PERIOD_MS);
+  digitalWrite(33, HIGH);
 }
 
 void setup() {
-  pinMode(33, OUTPUT);
-  digitalWrite(33, LOW);
-  delay(10);
-  digitalWrite(33, HIGH);
+  blink();
 
-	Serial.begin(115200);     // opens WSerial port, sets data rate to 9600 bps
+	// Serial.begin(115200);     // opens WSerial port, sets data rate to 9600 bps
   WSerial.println();
 
 
   configESPCamera();
-
+  vTaskDelay(100/portTICK_PERIOD_MS);
   //Serial.printf("Connecting to %s ", ssid);
   WSerial.printf("Connecting to %s \n", ssid);
 
